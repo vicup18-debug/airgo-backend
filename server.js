@@ -5,9 +5,12 @@ const http = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
 const path = require('path');
+
+// Route Imports
 const authRoutes = require('./routes/auth');
 const hotelRoutes = require('./routes/hotels');
 const roomRoutes = require('./routes/rooms');
+const Booking = require('./models/bookings'); // Moved to the top with imports
 
 // Initialize App
 const app = express();
@@ -25,8 +28,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/hotels', hotelRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use('/api/rooms', require('./routes/rooms'));
-app.use('/api/bookings', require('./routes/booking'));
 
 // Test Route
 app.get('/', (req, res) => {
@@ -47,53 +48,35 @@ io.on('connection', (socket) => {
     });
 });
 
+// ==========================================
+// BOOKING ROUTES
+// ==========================================
+
+// 1. Save a new booking
+app.post('/api/bookings', async (req, res) => {
+    try {
+        const newBooking = new Booking(req.body);
+        await newBooking.save();
+        res.status(201).json(newBooking);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Get bookings for a specific user
+app.get('/api/bookings/user/:userId', async (req, res) => {
+    try {
+        const bookings = await Booking.find({ userId: req.params.userId }).sort({ createdAt: -1 });
+        res.status(200).json(bookings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 // Start the Server
 const PORT = process.env.PORT || 5000;
 
-const Booking = require('./models/bookings'); // Adjust path if needed
-
-// 1. Save a new booking
-app.post('/api/bookings', async (req, res) => {
-    try {
-        const newBooking = new Booking(req.body);
-        await newBooking.save();
-        res.status(201).json(newBooking);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 2. Get bookings for a specific user
-app.get('/api/bookings/:userId', async (req, res) => {
-    try {
-        const bookings = await Booking.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-        res.status(200).json(bookings);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-}); const Booking = require('./models/bookings'); // Adjust path if needed
-
-// 1. Save a new booking
-app.post('/api/bookings', async (req, res) => {
-    try {
-        const newBooking = new Booking(req.body);
-        await newBooking.save();
-        res.status(201).json(newBooking);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 2. Get bookings for a specific user
-app.get('/api/bookings/:userId', async (req, res) => {
-    try {
-        const bookings = await Booking.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-        res.status(200).json(bookings);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 app.listen(PORT, () => {
-    console.log(`Airgo T& Engine running on port ${PORT}`);
+    console.log(`Airgo Engine running on port ${PORT}`);
 });
