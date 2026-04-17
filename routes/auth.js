@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/user'); // Assuming you have a User model!
+const User = require('../models/user');
 
 // 🟢 REGISTER A NEW USER
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, phone, role } = req.body;
 
         // 1. Check if user already exists
         let user = await User.findOne({ email });
@@ -18,10 +18,23 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // 3. Save the new user to MongoDB via Mongoose
-        user = new User({ name, email, password: hashedPassword });
+        user = new User({
+            name,
+            email,
+            password: hashedPassword,
+            phone: phone || '',
+            role: role || 'user' // Default to normal user if none is provided
+        });
         await user.save();
 
-        res.status(201).json({ message: "User created successfully!" });
+        // 🟢 FIX: Send the user data back so the mobile app can auto-login!
+        res.status(201).json({
+            message: "User created successfully!",
+            userId: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
@@ -43,7 +56,14 @@ router.post('/login', async (req, res) => {
         // 3. Create a secure token (VIP Pass)
         const token = jwt.sign({ userId: user._id }, 'soma_concepts_secret_key', { expiresIn: '7d' });
 
-        res.status(200).json({ token, userId: user._id, name: user.name });
+        // 🟢 FIX: Send the ROLE and EMAIL back to the mobile app!
+        res.status(200).json({
+            token,
+            userId: user._id,
+            name: user.name,
+            email: user.email, // The app needs this for payments
+            role: user.role    // The app needs this for the Dashboard Redirect
+        });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
