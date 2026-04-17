@@ -1,7 +1,7 @@
 const express = require('express');
 const Hotel = require('../models/hotel');
 const router = express.Router();
-const { isPartner, isSuperAdmin } = require('..models/middleware/authMiddleware');
+const { isPartner, isSuperAdmin } = require('./authMiddleware');
 
 // 🟢 GET ALL HOTELS (Your mobile app will call this for the Home Screen)
 router.get('/', async (req, res) => {
