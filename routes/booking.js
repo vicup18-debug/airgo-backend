@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Booking = require('../models/booking');
 const Room = require('../models/room');
+const { verifyToken, isPartner, isSuperAdmin } = require('../middleware/authMiddleware');
 
 // 🟢 PROCESS A NEW BOOKING
-router.post('/checkout', async (req, res) => {
+router.post('/checkout', verifyToken, async (req, res) => {
     try {
         const { roomId, totalPaid } = req.body;
 

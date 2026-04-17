@@ -1,6 +1,7 @@
 const express = require('express');
 const Room = require('../models/room');
 const router = express.Router();
+const { isPartner, isSuperAdmin } = require('../middleware/authMiddleware');
 
 // 🟢 GET ALL ROOMS (Can also be filtered by hotelId later)
 router.get('/', async (req, res) => {
